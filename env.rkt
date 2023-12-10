@@ -29,13 +29,3 @@ representation BNF:
          (env-lookup x rest))]))
 
 
-;; build-fun-env :: build an environment for the interpretation of a
-;; function body, where the formal parameters of the function
-;; reference the actual arguments passed.
-(define (build-fun-env params args env)
-  (match params
-    [(cons x xs)
-     (def arg (car args))
-     (def extended-env (extend-env x arg env))
-     (build-fun-env xs (cdr args) extended-env)]
-    [(list) env]))

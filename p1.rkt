@@ -6,6 +6,16 @@
 ;;    Utility functions
 ;; ======================
 
+;; build-fun-env :: build an environment for the interpretation of a
+;; function body, where the formal parameters of the function
+;; reference the actual arguments passed.
+(define (build-fun-env params args env)
+  (match params
+    [(cons x xs)
+     (def arg (car args))
+     (def extended-env (extend-env x arg env))
+     (build-fun-env xs (cdr args) extended-env)]
+    [(list) env]))
 
 
 ;; arity-error :: Raises and exception, for different arity and number
@@ -87,7 +97,7 @@
 ;; parse :: ...
 (define (parse sp)
   (match sp
-    [(list ds ... e) (prog (map parse-fundef ds) (parse-expr e))] ;; ds es la lista de definiciones, e es la expresion principal
+    [(list ds ... e) (prog (map parse-fundef ds) (parse-expr e))]
     ))
 
 ;; parse-expr :: ...
@@ -110,14 +120,13 @@
     
     [(list 'with lst e)
      (match lst
-       [(cons (list x b) bs) ;; non-empty list
+       [(cons (list x b) bs)
         (def named-expr (parse-expr b))
         (def body-expr (parse-expr (list 'with bs e))) 
         (With x named-expr body-expr )]       
-       [(list) (parse-expr e)])] ;; empty list
+       [(list) (parse-expr e)])]
     
-    [(cons f ses)
-     (App f (map parse-expr ses))]
+    [(cons f ses) (App f (map parse-expr ses))]
     
     [_ (error "not yet implemented")]
     ))
