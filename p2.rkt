@@ -33,6 +33,13 @@
   (App f e)
   )
 
+;; Value
+(deftype Val
+  (numV n)
+  (boolV b)
+  (pairV lV rV))
+
+
 ;; Type
 (deftype Type
   (numT)
@@ -53,27 +60,59 @@
   (typedId id type))
 
 
-;; operand-type-test
+;; build-fun-env :: 
+;; Returns an environment for the interpretation of a function body,
+;; where the formal parameters of the function reference the actual
+;; arguments passed.
+(define (build-fun-env params args env)
+  (match params
+    [(cons x xs)
+     (def id  (typedId-id x))
+     (def arg (car args))
+     (def extended-env (extend-env id arg env))
+     (build-fun-env xs (cdr args) extended-env)]
+    [(list) env]))
+
+;; operand-type-test :: Symbol Type Type -> Bool
+;; Returns #t if the actual type matches the expected type.
 (define (operand-type-test op-sym exp-type actual-type)
   (if (equal? exp-type actual-type)
-      1 (operand-type-error op-sym exp-type actual-type)))
-
-;; wrong-arg-error ::
-(define (arg-type-error param-type arg-type)
-  (define t1 (type-to-sym param-type))
-  (define t2 (type-to-sym arg-type))
-  (error (format "Static type error: expected ~a found ~a" t1 t2)))
+      #t (operand-type-error op-sym exp-type actual-type)))
 
 
-;; wrong-type-error ::
+
+
+;; wrong-type-error :: Symbol Type Type
+;; Raises an exception for a given operation when type 
 (define (operand-type-error op-sym exp-type actual-type)
   (define exp-sym    (type-to-sym exp-type))
   (define actual-sym (type-to-sym actual-type))
   (error (format "Static type error: operator ~a expected ~a found ~a" op-sym exp-sym actual-sym)))
 
 
+;; wrong-arg-error :: Type Type -> err
+;; Raises an exception for an argument with the wrong type in a
+;; function
+(define (arg-type-error param-type arg-type)
+  (define t1 (type-to-sym param-type))
+  (define t2 (type-to-sym arg-type))
+  (error (format "Static type error: expected ~a found ~a" t1 t2)))
 
-;; build-typed-env :: (List TypedId) Env -> Env
+;; arity-error :: Symbol Number Number -> err
+(define (arity-error fun arity actual-arg-num)
+  (def err-message (format "Arity mismatch: ~a expected ~a found ~a" fun arity actual-arg-num))
+  (error err-message))
+
+;; ret-type-err :: Symbol Type Type -> err
+(define (ret-type-err f declared-type actual-type)
+  (def s1 (type-to-sym declared-type))
+  (def s2 (type-to-sym actual-type))
+  (def err-message (format "Static type error: declared return type of ~a was ~a returned ~a" f s1 s2))
+  (error err-message))
+
+
+
+;; build-typed-env :: (ListOf TypedId) Env -> Env
 ;; Takes a list of typed ids and an environment, and returns an
 ;; extended environment with the id-type pairs in the list.
 (define (build-type-env typed-params  env)
@@ -84,7 +123,7 @@
     [(list) env]))
 
 
-;; lookup-fundef :: 
+;; lookup-fundef :: Symbol (ListOf Fundef) -> Fundef
 ;; looks up the requested function by its identifier among the defined
 ;; functions
 (define (lookup-fundef f funs)
@@ -100,7 +139,8 @@
          (lookup-fundef f rest))]))
 
 
-;; sym-to-type :: Translate type annotation into actual type.
+;; sym-to-type :: Symbol -> Type
+;; Translates a type annotation to a Type
 (define (sym-to-type s)
   (match s
     ['Num (numT)]
@@ -112,40 +152,40 @@
     [_ (error (format "Error: There is no ~a type!" s))]))
 
 
+;; type-to-sym :: Type -> Symbol
+;; Translates a type to its corresponding type annotation.
 (define (type-to-sym t)
   (match t
     [(numT)  'Num]
     [(boolT) 'Bool]
     [(pairT t1 t2) (list 'Pair (type-to-sym t1) (type-to-sym t2))]
-    [_ (error "More types to be supported")]))
+    [_ (error "Type not recognized")]))
 
 
-
-
-
-;; parse :: ...
+;; parse :: Symbolic Program -> Program
 (define (parse sp)
   (match sp
     [(list ds ... e) (prog (map parse-fundef ds) (parse-expr e))]
     ))
 
-;; parse-expr :: ...
+
+;; parse-expr :: [Symbolic Expression] -> Expression
 (define (parse-expr se)
   (match se
-    [(? number?)              (Num se)]
-    [(? symbol?)              (Id se)]
+    [(? number?)              (Num  se)]
+    [(? symbol?)              (Id   se)]
     [(? boolean?)             (Bool se)]
     [(list 'cons se1 se2)     (Cons (parse-expr se1) (parse-expr se2))]
     [(list 'add1 se1)         (Add1 (parse-expr se1))]
-    [(list '+ se1 se2)        (Add (parse-expr se1) (parse-expr se2))]
-    [(list '< se1 se2)        (Lt (parse-expr se1) (parse-expr se2))]
-    [(list '= se1 se2)        (Eq (parse-expr se1) (parse-expr se2))]
-    [(list '! se1)            (Not (parse-expr se1))]
-    [(list '&& se1 se2)       (And (parse-expr se1) (parse-expr se2))]
-    [(list '|| se1 se2)       (Or  (parse-expr se1) (parse-expr se2))]
-    [(list 'fst se)           (Fst (parse-expr se))]
-    [(list 'snd se)           (Snd (parse-expr se))]
-    [(list 'if se1 se2 se3)   (If (parse-expr se1) (parse-expr se2) (parse-expr se3))]
+    [(list '+ se1 se2)        (Add  (parse-expr se1) (parse-expr se2))]
+    [(list '< se1 se2)        (Lt   (parse-expr se1) (parse-expr se2))]
+    [(list '= se1 se2)        (Eq   (parse-expr se1) (parse-expr se2))]
+    [(list '! se1)            (Not  (parse-expr se1))]
+    [(list '&& se1 se2)       (And  (parse-expr se1) (parse-expr se2))]
+    [(list '|| se1 se2)       (Or   (parse-expr se1) (parse-expr se2))]
+    [(list 'fst se)           (Fst  (parse-expr se))]
+    [(list 'snd se)           (Snd  (parse-expr se))]
+    [(list 'if se1 se2 se3)   (If   (parse-expr se1) (parse-expr se2) (parse-expr se3))]
     
     [(list 'with lst e)
      (match lst
@@ -181,15 +221,17 @@
     [_ (error "Bad function parameter")]))
 
 
-;; parse-fundef :: ...
+;; parse-fundef :: [Symbolic Function Definition] -> Fundef
 (define (parse-fundef sf)
   (match sf
-    
+
+    ;; untyped function definition
     [(list 'define (cons fun params) body)
      (def typed-params (parse-fundef-params params))
      (def body-expr    (parse-expr body))
      (fundef fun typed-params body-expr)]
-    
+
+    ;; typed function definition
     [(list 'define (cons fun params) ': type-annotation body)
      (def fun-type     (sym-to-type type-annotation))
      (def typed-params (parse-fundef-params params))
@@ -197,59 +239,52 @@
      (typedFundef fun fun-type typed-params body-expr)]))
 
 
-;; typecheck-fundef-list :: ... -> 
-;; fenv        : environment storing the (fun,type) pairs
-;; funs        : list of funs left to be typechecked
-;; fundef-list : complete list of function definitions
-;;
-;; Returns a pair with the updated fenv and the remaining functions to
-;; be typechecked.
-(define (typecheck-fundef-list funs fundef-list)
-  (match funs
+;; typecheck-fundef-list :: (ListOf Fundef) (ListOf Fundef) -> Bool
+;; Returns #t if a type is successfully resolved for each checked
+;; function. Otherwise, raises an exception.
+(define (typecheck-fundef-list unchecked-funs funs)
+  (match unchecked-funs
     [(cons f fs)
      (begin
-       (typecheck-fundef f fundef-list)
-       (typecheck-fundef-list fs fundef-list))]
+       (typecheck-fundef f funs)
+       (typecheck-fundef-list fs funs))]
     [(list) #t]))
                    
 
 
-;; typecheck-fundef :: 
-;; f    : function to be typechecked
-;; funs : list of function definitions
+;; typecheck-fundef :: Fundef (ListOf Fundef) -> Type
+;; Returns the type of a function definition.
 (define (typecheck-fundef f funs)
   (match f
-    [(fundef _ params body) ;; non-typed function
-     (def env      (build-type-env params empty-env))
-     (def fun-type (typecheck-expr body env funs))
-     fun-type]
-    [(typedFundef _ type params body)
-     (def env      (build-type-env params empty-env))
-     (def fun-type (typecheck-expr body env funs))
-     (if (equal? type fun-type)
-         fun-type
-         (error "Wrong function type"))]))
+    
+    [(fundef fid params body) ;; untyped function
+     (def env (build-type-env params empty-env))
+     (typecheck-expr body env funs)]
+
+    [(typedFundef fid def-type params body)
+     (def env    (build-type-env params empty-env))
+     (def ret-type (typecheck-expr body env funs))
+     (if (equal? def-type ret-type)
+         def-type
+         (ret-type-err fid def-type ret-type))]))
 
   
 
-;; typecheck-expr :: 
-;; 
-       
+;; typecheck-expr :: Expression Env (ListOf Fundef) -> Type/err
 (define (typecheck-expr e env funs)
   (match e
 
     ;; Num 
     [(Num _) (numT)]
     
-    ;; IMPORTANT: If [x] identifier is not found, this error is
-    ;; statically catched during the type checking step.
+    ;; Id
     [(Id x)  (env-lookup x env)]
 
     ;; Bool
     [(Bool _) (boolT)]
     
     ;; Cons 
-    [(Cons e1 e2) ;; ============================
+    [(Cons e1 e2)
      (def t1 (typecheck-expr e1 env funs))
      (def t2 (typecheck-expr e2 env funs))
      (pairT t1 t2)]
@@ -353,11 +388,14 @@
      t2]
 
     ;; App
-    ;; IMPORTANT: If function identifier is not found, this error is
-    ;; statically catched in the type checking step.
     [(App f es)
 
+     ;; number of arguments passed to the function
+     (def args-num (length es))
+     ;; Fundef to be applied (Error if not found)
      (def fun (lookup-fundef f funs))
+     ;; Compares the types of argumens with those of the formal
+     ;; parameters
      (def typecheck-arg (λ (p)
                           (def (list param arg) p)
                           (def param-type (typedId-type param))
@@ -365,22 +403,27 @@
                           (if (equal? arg-type param-type)
                               true
                               (arg-type-error param-type arg-type))))
+     ;; Verifies the number of arguments equals the function arity.
+     (def test-arity (λ (arity)
+                       (if (equal? arity args-num)
+                           #t (arity-error f arity args-num))))
+                           
 
      (match fun
        [(fundef _ params _) 
         (def param-arg-list (map list params es))
         (begin
           (map typecheck-arg param-arg-list)
-          (typecheck-fundef fun funs))]
+          (test-arity (length params))
+          (typecheck-fundef fun funs))] ;; return function type
        
         [(typedFundef _ type params _)
          (def param-arg-list (map list params es))
          (begin
            (map typecheck-arg param-arg-list)
-           type)])]
+           (test-arity (length params))
+           type)])] ;; return declared function type
            
-
-       
 
     [_ (error "not yet implemented")]
     ))
@@ -388,9 +431,114 @@
 
 
 
-;; typecheck :: returns the type of a program
+
+;; typecheck :: Program -> Type
+;; Returns the type of a program. 
 (define (typecheck p)
   (def (prog funs main) p)
   (begin
     (typecheck-fundef-list funs funs)
     (typecheck-expr main empty-env funs)))
+
+
+
+
+
+;; interp :: Expression Env (ListOf Fundef) -> Value
+(define (interp e env funs)
+  (match e
+    
+    [(Num n) (numV n)]
+    
+    [(Id x) (env-lookup x env)]
+    
+    [(Bool b) (boolV b)]
+    
+    [(Cons e1 e2)
+     (def left-val  (interp e1 env funs))
+     (def right-val (interp e2 env funs))       
+     (pairV left-val right-val)]
+    
+    [(Fst e1)
+     (def (pairV v1 _) (interp e1 env funs))
+     v1]
+    
+    [(Snd e1)
+     (def (pairV _ v1) (interp e1 env funs))
+     v1]
+    
+    [(Add1 e1)
+     (def (numV n) (interp e1 env funs))
+     (numV (+ 1 n))]
+    
+    [(Add e1 e2)
+     (def (numV n1) (interp e1 env funs))
+     (def (numV n2) (interp e2 env funs))
+     (numV (+ n1 n2))]
+    
+    [(Lt e1 e2)
+     (def (numV n1) (interp e1 env funs))
+     (def (numV n2) (interp e2 env funs))
+     (boolV (< n1 n2))]
+    
+    [(Eq e1 e2)
+     (def (numV n1) (interp e1 env funs))
+     (def (numV n2) (interp e2 env funs))
+     (boolV (= n1 n2))]
+    
+    [(Not e1)
+     (def (boolV b) (interp e1 env funs))
+     (boolV (not b))]
+    
+    [(And e1 e2)
+     (def (boolV b1) (interp e1 env funs))
+     (def (boolV b2) (interp e2 env funs))
+     (boolV (and b1 b2))]
+    
+    [(Or e1 e2)
+     (def (boolV b1) (interp e1 env funs))
+     (def (boolV b2) (interp e2 env funs))
+     (boolV (or b1 b2))]
+    
+    [(If e1 e2 e3)
+     (def (boolV b) (interp e1 env funs))
+     (def true-val  (interp e2 env funs))
+     (def false-val (interp e3 env funs))
+     (if b true-val false-val)]
+
+    ;; With
+    [(With x e b)
+     (def named-expr-val (interp e env funs))
+     (def extended-env (extend-env x named-expr-val env))
+     (def body-val (interp b extended-env funs))
+     body-val]
+
+    ;; App 
+    [(App f expr-list)
+     (match (lookup-fundef f funs)
+       [(or (fundef _ params body) (typedFundef _ _ params body))
+        (def interp-expr-list (λ (arg-expr) (interp arg-expr env funs)))
+        (def arg-val-list (map interp-expr-list expr-list))
+        (def fun-env (build-fun-env params arg-val-list empty-env))
+        (interp body fun-env funs)])]
+    
+    [_ (error "not yet implemented")]
+    ))
+
+
+
+
+
+
+;; run :: Program -> Value
+;; Evaluates a program
+(define (run sp)
+  (def (prog funs main) (parse sp))
+  (begin
+    (typecheck (prog funs main))
+    (interp main empty-env funs))) 
+
+(run '{ ; Programa de ejemplo 4
+                          {define {id {x : Num}} {+ 1 x}}
+                          {id 5}
+                          })
