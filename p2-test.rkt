@@ -2,8 +2,8 @@
 
 (require "p2.rkt")
 
-(test (typecheck (prog '() (num 5))) (numT))
-(test (typecheck (prog '() (bool #t))) (boolT))
+(test (typecheck (prog '() (Num 5))) (numT))
+(test (typecheck (prog '() (Bool #t))) (boolT))
 
 
 

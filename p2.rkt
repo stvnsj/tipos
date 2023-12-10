@@ -9,6 +9,49 @@
 <type>   ::= Num | Bool | {Pair <type> <type>}
 |#
 
+;; ====================
+;;   Data Structures
+;; ====================
+
+;; Expression
+(deftype Expr
+  (Num n)
+  (Id x)
+  (Bool b)
+  (Cons f s)
+  (Fst p)
+  (Snd p)
+  (Add1 n)
+  (Add l r)
+  (Lt l r)
+  (Eq l r)
+  (Not b)
+  (And l r)
+  (Or l r)
+  (If c t f)
+  (With x e b)
+  (App f e)
+  )
+
+;; Type
+(deftype Type
+  (numT)
+  (boolT)
+  (pairT lT rT))
+
+;; Program
+(deftype Prog
+  (prog funs main))
+
+;; Function Definition
+(deftype Fundef
+  (fundef  name arg body)
+  (typedFundef name type arg body)) ;; function with type declaration
+
+;; Formal Parameter
+(deftype TypedId
+  (typedId id type))
+
 
 ;; operand-type-test
 (define (operand-type-test op-sym exp-type actual-type)
@@ -77,45 +120,6 @@
     [_ (error "More types to be supported")]))
 
 
-
-;; Expression
-(deftype Expr
-  (Num n)
-  (Id x)
-  (Bool b)
-  (Cons f s)
-  (Fst p)
-  (Snd p)
-  (Add1 n)
-  (Add l r)
-  (Lt l r)
-  (Eq l r)
-  (Not b)
-  (And l r)
-  (Or l r)
-  (If c t f)
-  (With x e b)
-  (App f e)
-  )
-
-;; Type
-(deftype Type
-  (numT)
-  (boolT)
-  (pairT lT rT))
-
-;; Program
-(deftype Prog
-  (prog funs main))
-
-;; Function Definition
-(deftype Fundef
-  (fundef  name arg body)
-  (typedFundef name type arg body)) ;; function with type declaration
-
-;; Formal Parameter
-(deftype TypedId
-  (typedId id type))
 
 
 
@@ -356,7 +360,7 @@
      (def fun (lookup-fundef f funs))
      (def typecheck-arg (λ (p)
                           (def (list param arg) p)
-                          (def (typedId _ param-type) param)
+                          (def param-type (typedId-type param))
                           (def arg-type (typecheck-expr arg env funs))
                           (if (equal? arg-type param-type)
                               true
