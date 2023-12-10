@@ -60,6 +60,8 @@
   (typedId id type))
 
 
+
+
 ;; build-fun-env :: 
 ;; Returns an environment for the interpretation of a function body,
 ;; where the formal parameters of the function reference the actual
@@ -527,9 +529,6 @@
 
 
 
-
-
-
 ;; run :: Program -> Value
 ;; Evaluates a program
 (define (run sp)
@@ -538,7 +537,4 @@
     (typecheck (prog funs main))
     (interp main empty-env funs))) 
 
-(run '{ ; Programa de ejemplo 4
-                          {define {id {x : Num}} {+ 1 x}}
-                          {id 5}
-                          })
+
