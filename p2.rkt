@@ -1,14 +1,6 @@
 #lang play
 (require "env.rkt")
 
-;;;;
-#|
-<fundef> ::= {define {<id> {arg}*} [: <type>] <expr>}
-<arg>    ::= {<id> : <type>}
-<expr>   ::= ... | {with { {<id> [: <type>] <expr>}* } <expr>}
-<type>   ::= Num | Bool | {Pair <type> <type>}
-|#
-
 ;; ====================
 ;;   Data Structures
 ;; ====================
@@ -39,9 +31,9 @@
   (boolV b)
   (pairV lV rV))
 
-
 ;; Type
 (deftype Type
+  (anyT)
   (numT)
   (boolT)
   (pairT lT rT))
@@ -52,8 +44,7 @@
 
 ;; Function Definition
 (deftype Fundef
-  (fundef  name arg body)
-  (typedFundef name type arg body)) ;; function with type declaration
+  (fundef name type arg body))
 
 ;; Formal Parameter
 (deftype TypedId
@@ -80,9 +71,6 @@
 (define (operand-type-test op-sym exp-type actual-type)
   (if (equal? exp-type actual-type)
       #t (operand-type-error op-sym exp-type actual-type)))
-
-
-
 
 ;; wrong-type-error :: Symbol Type Type
 ;; Raises an exception for a given operation when type 
@@ -131,11 +119,7 @@
 (define (lookup-fundef f funs)
   (match funs
     ['() (error 'lookup-fundef "function not found: ~a" f)]
-    [(cons (and fd (typedFundef fn _ _ _)) rest)
-     (if (symbol=? fn f)
-         fd
-         (lookup-fundef f rest))]
-    [(cons (and fd (fundef fn _ _)) rest)    ;; untyped function 
+    [(cons (and fd (fundef fn _ _ _)) rest)    ;; untyped function 
      (if (symbol=? fn f)
          fd
          (lookup-fundef f rest))]))
@@ -231,14 +215,14 @@
     [(list 'define (cons fun params) body)
      (def typed-params (parse-fundef-params params))
      (def body-expr    (parse-expr body))
-     (fundef fun typed-params body-expr)]
+     (fundef fun (anyT) typed-params body-expr)]
 
     ;; typed function definition
     [(list 'define (cons fun params) ': type-annotation body)
      (def fun-type     (sym-to-type type-annotation))
      (def typed-params (parse-fundef-params params))
      (def body-expr    (parse-expr body))
-     (typedFundef fun fun-type typed-params body-expr)]))
+     (fundef fun fun-type typed-params body-expr)]))
 
 
 ;; typecheck-fundef-list :: (ListOf Fundef) (ListOf Fundef) -> Bool
@@ -257,20 +241,15 @@
 ;; typecheck-fundef :: Fundef (ListOf Fundef) -> Type
 ;; Returns the type of a function definition.
 (define (typecheck-fundef f funs)
-  (match f
-    
-    [(fundef fid params body) ;; untyped function
-     (def env (build-type-env params empty-env))
-     (typecheck-expr body env funs)]
-
-    [(typedFundef fid def-type params body)
-     (def env    (build-type-env params empty-env))
-     (def ret-type (typecheck-expr body env funs))
-     (if (equal? def-type ret-type)
-         def-type
-         (ret-type-err fid def-type ret-type))]))
-
-  
+  (def (fundef f-id f-type f-params f-body) f)
+  (def env (build-type-env f-params empty-env))
+  (def ret-type (typecheck-expr f-body env funs))
+  (cond
+    [(equal? f-type (anyT))  ret-type]
+    [else
+     (if (equal? f-type ret-type)
+         f-type
+         (ret-type-err f-id f-type ret-type))]))
 
 ;; typecheck-expr :: Expression Env (ListOf Fundef) -> Type/err
 (define (typecheck-expr e env funs)
@@ -412,21 +391,15 @@
                            
 
      (match fun
-       [(fundef _ params _) 
+       [(fundef _ type params _) 
         (def param-arg-list (map list params es))
         (begin
           (map typecheck-arg param-arg-list)
           (test-arity (length params))
-          (typecheck-fundef fun funs))] ;; return function type
+          (if (equal? type (anyT))
+              (typecheck-fundef fun funs)
+              type))])]
        
-        [(typedFundef _ type params _)
-         (def param-arg-list (map list params es))
-         (begin
-           (map typecheck-arg param-arg-list)
-           (test-arity (length params))
-           type)])] ;; return declared function type
-           
-
     [_ (error "not yet implemented")]
     ))
 
@@ -518,7 +491,7 @@
     ;; App 
     [(App f expr-list)
      (match (lookup-fundef f funs)
-       [(or (fundef _ params body) (typedFundef _ _ params body))
+       [(fundef _ _ params body)
         (def interp-expr-list (λ (arg-expr) (interp arg-expr env funs)))
         (def arg-val-list (map interp-expr-list expr-list))
         (def fun-env (build-fun-env params arg-val-list empty-env))
