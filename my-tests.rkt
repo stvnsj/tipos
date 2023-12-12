@@ -5,10 +5,7 @@
 
 ;; ======= BASIC TESTS ===========
 
-
 ;; ======= TYPECHECK TESTS ==========
-
-
 
 ;; ======== CONTRACT TESTS ===========
 

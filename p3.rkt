@@ -179,8 +179,8 @@
 ;; parse :: Symbolic Program -> Program
 (define (parse sp)
   (match sp
-    [(list ds ... e) (prog (map parse-fundef ds) (parse-expr e))]
-    ))
+    [(list ds ... e)
+     (prog (map parse-fundef ds) (parse-expr e))]))
 
 
 ;; parse-expr :: [Symbolic Expression] -> Expression
@@ -348,6 +348,7 @@
 
 ;; typecheck-expr :: Expression Env (ListOf Fundef) -> Type/err
 (define (typecheck-expr e env funs)
+
   (match e
 
     ;; Num 
@@ -618,9 +619,11 @@
     ;; With
     [(With x e b)
      (def named-expr-val (interp e env funs))
-     (def extended-env (extend-env x named-expr-val env))
-     (def body-val (interp b extended-env funs))
-     body-val]
+     (match x
+       [(or (typedId id _) id)
+        (def extended-env (extend-env id named-expr-val env))
+        (def body-val (interp b extended-env funs))
+        body-val])]
 
     ;; App 
     [(App f expr-list)
