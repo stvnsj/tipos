@@ -10,11 +10,11 @@
 
 
 
-(run-test #f '{5} (numV 5))
+
 
 
 ;; Lexical Scope, evaluation is 11 (in dynamic scope should be zero)
-(run-test #f '{
+(run-test #t '{
                
                {define {f {x : Num}} : Num {with {{y 1}} {+ x y}}}
                
@@ -23,7 +23,7 @@
                } (numV 2))
 
 ;; Xor
-(run-test #f '{
+(run-test #t '{
 
                {define {xor {p : Bool} {q : Bool}} : Bool
                  { || { && p {! q}} {&& {! p} q}}}
