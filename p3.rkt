@@ -612,9 +612,8 @@
     
     [(If e1 e2 e3)
      (def (boolV b) (interp e1 env funs))
-     (def true-val  (interp e2 env funs))
-     (def false-val (interp e3 env funs))
-     (if b true-val false-val)]
+     (if b (interp e2 env funs)
+         (interp e3 env funs))]
 
     ;; With
     [(With x e b)
@@ -627,12 +626,16 @@
 
     ;; App 
     [(App f expr-list)
+
+     
      (def (fundef _ _ params body contracts) (lookup-fundef f funs))
+     
      (def interp-expr-list (λ (arg-expr) (interp arg-expr env funs)))
+     
      (def arg-val-list (map interp-expr-list expr-list))
+     
      (def fun-env (build-fun-env params arg-val-list empty-env))
-
-
+     
      (def interp-contract
        (λ (con)
          (def (argContract con-id con-type con-pred) con)
