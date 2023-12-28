@@ -12,6 +12,8 @@ representation BNF:
 <env> ::= (mtEnv)
 | (aEnv <id> <val> <env>)
 |#
+
+
 (deftype Env
   (mtEnv)
   (aEnv id val env))
@@ -22,6 +24,7 @@ representation BNF:
 
 
 (define (env-lookup x env)
+
   (match env
     [(mtEnv) (error 'env-lookup "free identifier: ~a" x)]
     [(aEnv id val rest)

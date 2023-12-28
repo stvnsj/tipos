@@ -1,7 +1,9 @@
 
 #lang play
 
-(require "p3.rkt")
+(require "p3-new.rkt")
+(require "deftype.rkt")
+
 
 (define-syntax run-test
   (syntax-rules ()

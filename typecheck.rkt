@@ -29,6 +29,7 @@
 
 
 
+
 ;; typecheck-fundef :: Fundef Env (ListOf Fundef) -> Type
 (define (typecheck-fundef f fenv funs)
   (def (fundef f-name f-type f-params f-body _) f)
@@ -210,8 +211,42 @@
 
 
 
+
+;; typecheck-contract :: ArgContract (ListOf Fundef) -> Bool/err
+(define (typecheck-contract con fenv funs)
+
+  (def (argContract _ arg-type predicate) con) ; unpack contract 
+  (def con-def (lookup-fundef predicate funs)) ; predicate fundef
+  (def (fundef _ _ args _ _) con-def) ; unpack predicate fundef
+  (def arity (length args)) ; predicate arity
+  (def type  (env-lookup (argContract-predicate con) fenv)) ; return type of predicate
+
+  ;; ==== STATIC CONTRACT ERRORS ====
+  (begin
+    ;; If arity is not 1, then error.
+    (if (equal? 1 arity) #t
+        (predicate-type-err predicate))
+    ;; If parameter type of predicate does not match the function
+    ;; parameter type, then error
+    (if (equal? arg-type (typedId-type (car args))) #t
+        (predicate-type-err predicate))
+    ;; If predicate does not return boolen, then error
+    (if (equal? type (boolT)) #t ;; Declared type
+        (if (equal? (typecheck-fundef con-def funs) (boolT))
+            #t
+            (predicate-type-err predicate)))))
+
+(define (typecheck-contract-list fun fenv funs)
+  (def contract-list (fundef-contracts fun))
+  (map (λ (con) (typecheck-contract con fenv funs)) contract-list))
+         
+
+
+
 (define (typecheck p)
   (def (prog funs main) p)
-  (def fenv (typecheck-fundef-list empty-env funs))
+  (def fenv (typecheck-fundef-list empty-env funs))  
   (def (list type _) (typecheck-expr main empty-env fenv funs))
-  type)
+  (begin 
+    (map (λ (fun) (typecheck-contract-list fun fenv funs)) funs)
+    type))

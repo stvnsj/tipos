@@ -4,8 +4,18 @@
 (require "deftype.rkt")
 (require "env.rkt")
 
-
-
+;; build-fun-env :: (ListOf TypedId) (ListOf Value) Env -> Env
+;; Returns an environment for the interpretation of a function body,
+;; where the formal parameters of the function reference the actual
+;; arguments passed.
+(define (build-fun-env params args env)
+  (match params
+    [(cons x xs)
+     (def id  (typedId-id x))
+     (def arg (car args))
+     (def extended-env (extend-env id arg env))
+     (build-fun-env xs (cdr args) extended-env)]
+    [(list) env]))
 
 ;; build-typed-env :: (ListOf TypedId) Env -> Env
 ;; Takes a list of typed ids and an environment,
@@ -55,6 +65,17 @@
     [(pairT t1 t2) (list 'Pair (type-to-sym t1) (type-to-sym t2))]
     [_ (error "Type not recognized")]))
 
+;; val-to-str :: Value -> String
+(define (val-to-str v)
+  (match v
+    [(numV n)  (format "~a" n)]
+    [(boolV b) (format "~a" b)]
+    [(pairV l r)
+     (def s1 (val-to-str l))
+     (def s2 (val-to-str r))
+     (format "(~a,~a)" s1 s2)]))
+
+
 
 ;; wrong-type-error :: Symbol Type Type -> err
 ;; Raises an exception for a given operation when
@@ -103,6 +124,21 @@
   (def err-message (format "Static type error: function ~a expected return type ~a found ~a" f t1 t2))
   (error err-message))
 
+
+
+;; contract-err :: Value Symbol -> err
+;; Called in runtime when an argument value does not fulfill its
+;; contract.
+(define (contract-err value predicate)
+  (def v (val-to-str value))
+  (def err-message (format "Runtime contract error: ~a does not satisfy ~a" v predicate))
+  (error err-message))
+
+;; predicate-type-err :: Symbol -> err
+;; called when predicate of contract has a wrong type.
+(define (predicate-type-err predicate)
+  (def err-message (format "Static contract error: invalid type for ~a" predicate))
+  (error err-message))
 
 
 ;; ret-type-test :: Symbol Type Type -> Number / err

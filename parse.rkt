@@ -4,6 +4,10 @@
 (require "deftype.rkt")
 
 
+(define (pp name obj)
+  (displayln (format "-------------------------------------\n~a :: ~a\n" name obj)))
+
+
 ;; =====================================
 ;;          PARSING FUNCTIONS
 ;; =====================================
@@ -78,8 +82,10 @@
   (match se
     ;; parameter has contract
     [(cons (list id ': type-annotation '@ predicate) rest)
+
      (def type  (sym-to-type type-annotation))
      (def cont  (argContract id type predicate))
+
      (cons cont (parse-fundef-contracts rest))]
     ;; parameter with no contract.
     [(cons (list _ ': _) rest) (parse-fundef-contracts rest)]
