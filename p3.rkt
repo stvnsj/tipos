@@ -1,6 +1,38 @@
 #lang play
 (require "env.rkt")
 
+#|
+----------------------------------------------------------------------------
+
+* Éric Tanter: 1- lo que se hace en estos casos es usar una función
+auxiliar (que incluso puede estar anidada):
+
+(define (typecheck-expr e)
+  (define (typecheck e tenv)
+     ... funcion recursiva ...)
+  (typecheck e (empty-tenv))
+
+asi la funcion top-level simplemente usar la funcion interna con un
+ambiente de tipos vacío.
+ 
+
+* Éric Tanter: 2- la manera de evitar typecheckear varias veces el
+cuerpo de una función es simplemente extender el AST con la
+información de tipo, que al inicio es no-inicializada (eg. #f) y luego
+de typechecking, atachas la información de tipo.  La forma
+no-imperativa (ie. funcional pura) de hacer esto es que el typing sea
+una fase que toma un AST sin info de tipo (o con información parcial)
+y produce un nuevo AST con toda la info asociada
+
+Éric Tanter: 3- lo que hiciste es una buena opción (basicamente lo que
+hacen en Python: si no hay info, entonces es Any)
+----------------------------------------------------------------------------
+|#
+
+
+
+
+
 ;; ====================
 ;;   Data Structures
 ;; ====================
@@ -222,6 +254,14 @@
     [_
      (displayln se)
      (error "not yet implemented")]))
+
+
+
+
+;; fun-type :: (ListOf Fundef) -> (ListOf Fundef)
+;; Transforms the input list of fundef where some function may have type (anyT)
+;; to a list where none has such type.
+(define 
 
 
 

@@ -1,0 +1,9 @@
+
+
+
+#+author: Jonnathan Stevens
+#+title:  Documentation
+
+* Typechecking 
+
+El chequeo de tipos se realiza a partir del llamado de la 

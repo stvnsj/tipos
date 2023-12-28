@@ -20,6 +20,7 @@ representation BNF:
 
 (def extend-env aEnv)
 
+
 (define (env-lookup x env)
   (match env
     [(mtEnv) (error 'env-lookup "free identifier: ~a" x)]
@@ -28,4 +29,12 @@ representation BNF:
          val
          (env-lookup x rest))]))
 
+
+(define (env-contains x env)
+  (match env
+    [(mtEnv) #f]
+    [(aEnv id val rest)
+     (if (symbol=? id x)
+         #t
+         (env-contains x rest))]))
 
