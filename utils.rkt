@@ -2,6 +2,35 @@
 #lang play
 
 (require "deftype.rkt")
+(require "env.rkt")
+
+
+
+
+;; build-typed-env :: (ListOf TypedId) Env -> Env
+;; Takes a list of typed ids and an environment,
+;; and returns an extended environment with the
+;; id-type pairs in the list.
+(define (build-type-env typed-params env)
+  (match typed-params
+    [(cons (typedId id type) rest)
+     (def extended-env (extend-env id type env))
+     (build-type-env rest extended-env)]
+    [(list) env]))
+
+
+;; lookup-fundef :: Symbol (ListOf Fundef) -> Fundef
+;; looks up the requested function by its
+;; identifier among the defined functions
+(define (lookup-fundef f funs)
+  (match funs
+    [(list ) (error 'lookup-fundef "function not found: ~a" f)]
+    [(cons (and fd (fundef fn _ _ _ _)) rest)    ;; untyped function 
+     (if (symbol=? fn f)
+         fd
+         (lookup-fundef f rest))]))
+
+
 
 ;; sym-to-type :: Symbol -> Type
 ;; Translates a type annotation to a Type
@@ -96,5 +125,6 @@
 (define (operand-type-test op-sym exp-type actual-type)
   (if (equal? exp-type actual-type)
       #t (operand-type-error op-sym exp-type actual-type)))
+
 
 
