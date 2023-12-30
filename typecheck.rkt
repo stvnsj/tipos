@@ -258,7 +258,8 @@
 (define (typecheck p)
   (def (prog funs main) p)
   (def fenv (typecheck-fundef-list empty-env funs))  
-  (def (list type _) (typecheck-expr main empty-env fenv funs))
   (begin 
     (map (λ (fun) (typecheck-contract-list fun fenv funs)) funs)
-    type))
+    ;; typecheck-expr returns a pair (Type, Env),
+    ;; but here only the type is returned
+    (car (typecheck-expr main empty-env fenv funs))))

@@ -2,7 +2,12 @@
 #lang play
 
 ;; Interpreter compatible with p{2,3}-test.rkt 
-(require "p3.rkt")
+(require "run.rkt")
+(require "deftype.rkt")
+(require "env.rkt")
+(require "typecheck.rkt")
+
+(require "parse.rkt")
 
 ;; ============ P1 Tests ================
 
