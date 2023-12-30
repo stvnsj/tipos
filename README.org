@@ -4,4 +4,4 @@
 #+author: Jonnathan Stevens
 #+title:  Documentation
 
-* Typechecking
+
