@@ -258,10 +258,6 @@ hacen en Python: si no hay info, entonces es Any)
 
 
 
-;; fun-type :: (ListOf Fundef) -> (ListOf Fundef)
-;; Transforms the input list of fundef where some function may have type (anyT)
-;; to a list where none has such type.
-(define 
 
 
 
@@ -335,12 +331,10 @@ hacen en Python: si no hay info, entonces es Any)
 ;; typecheck-contract :: ArgContract (ListOf Fundef) -> Bool/err
 (define (typecheck-contract con funs)
 
-  ;; unpack contract.  con-type is the type of the formal parameter
-  ;; subjected to the predicate.
-  (def (argContract _ arg-type predicate) con)
-  (def con-def (lookup-fundef predicate funs))
-  (def (fundef _ type args _ _) con-def)
-  (def arity (length args))
+  (def (argContract _ arg-type predicate) con) ; unpack contract 
+  (def con-def (lookup-fundef predicate funs)) ; predicate fundef
+  (def (fundef _ type args _ _) con-def) ; unpack predicate fundef
+  (def arity (length args)) ; predicate arity
 
   ;; ==== STATIC CONTRACT ERRORS ====
   (begin
@@ -690,8 +684,7 @@ hacen en Python: si no hay info, entonces es Any)
        (map interp-contract contracts)
        (interp body fun-env funs))]
     
-    [_ (error "not yet implemented")]
-    ))
+    [_ (error "not yet implemented")]))
 
 
 

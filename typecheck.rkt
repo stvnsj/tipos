@@ -34,10 +34,9 @@
 (define (typecheck-fundef f fenv funs)
   (def (fundef f-name f-type f-params f-body _) f)
   (def env (build-type-env f-params empty-env))
-  (def (list body-type fenv0) (typecheck-expr f-body env fenv funs))
-  
+  (def hhh (if (not (equal? f-type (anyT))) (extend-env f-name f-type fenv) fenv))
+  (def (list body-type fenv0) (typecheck-expr f-body env hhh funs))
   (def fenv1 (extend-env f-name body-type fenv0))
-
   (begin
     (ret-type-test f-name f-type body-type)
     (list body-type fenv1)))

@@ -1,7 +1,7 @@
 
 #lang play
 
-(require "p3-new.rkt")
+(require "run.rkt")
 (require "deftype.rkt")
 
 
@@ -9,9 +9,6 @@
   (syntax-rules ()
     ((_ bool program expected)
      (if bool (test (run program) expected) (displayln ">> Test Omitted\n")))))
-
-
-
 
 
 
