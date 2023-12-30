@@ -1,7 +1,6 @@
 
 #lang play
 
-
 ;; ====================
 ;;   Data Structures
 ;; ====================
@@ -28,19 +27,6 @@
   (With x e b)
   (App f e))
 
-;; Value
-(deftype Val
-  (numV n)
-  (boolV b)
-  (pairV lV rV))
-
-;; Type
-(deftype Type
-  (anyT)
-  (numT)
-  (boolT)
-  (pairT lT rT))
-
 ;; Program
 (deftype Prog
   (prog funs main))
@@ -56,3 +42,16 @@
 ;; Contract (of a function argument)
 (deftype ArgContract
   (argContract id type predicate))
+
+;; Type
+(deftype Type
+  (anyT)
+  (numT)
+  (boolT)
+  (pairT lT rT))
+
+;; Value
+(deftype Val
+  (numV n)
+  (boolV b)
+  (pairV lV rV))

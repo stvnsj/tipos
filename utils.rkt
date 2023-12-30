@@ -4,7 +4,7 @@
 (require "deftype.rkt")
 (require "env.rkt")
 
-;; build-fun-env :: (ListOf TypedId) (ListOf Value) Env -> Env
+;; build-fun-env :: (Listof TypedId) (Listof Value) Env -> Env
 ;; Returns an environment for the interpretation of a function body,
 ;; where the formal parameters of the function reference the actual
 ;; arguments passed.
@@ -17,7 +17,7 @@
      (build-fun-env xs (cdr args) extended-env)]
     [(list) env]))
 
-;; build-typed-env :: (ListOf TypedId) Env -> Env
+;; build-typed-env :: (Listof TypedId) Env -> Env
 ;; Takes a list of typed ids and an environment,
 ;; and returns an extended environment with the
 ;; id-type pairs in the list.
@@ -29,7 +29,7 @@
     [(list) env]))
 
 
-;; lookup-fundef :: Symbol (ListOf Fundef) -> Fundef
+;; lookup-fundef :: Symbol (Listof Fundef) -> Fundef
 ;; looks up the requested function by its
 ;; identifier among the defined functions
 (define (lookup-fundef f funs)

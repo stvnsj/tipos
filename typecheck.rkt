@@ -4,20 +4,17 @@
 (require "utils.rkt")
 (require "env.rkt")
 
-;; ==============================================
-;;              TYPECHECK FUNCTIONS
-;; ==============================================
-
-
-;; typecheck-fundef-list :: Env (ListOf Fundef) -> Env
+;; typecheck-fundef-list :: Env (Listof Fundef) -> Env
 ;; Builds an environment whose pairs have function name as id and
-;; function type as value.
+;; function return type as value.
 (define (typecheck-fundef-list fenv funs)
   (match funs
     [(list) fenv]
     [(cons f fs)
-     (def f-name (fundef-name f))
+     (def f-name (fundef-name f)) ; identifier of f.
      (cond
+       ;; If f-name is already in the env, the
+       ;; rest of funs is typechecked.
        [(env-contains f-name fenv) (typecheck-fundef-list fenv fs)]
        [else
         (def (list _ fenv1) (typecheck-fundef f fenv funs))
@@ -26,7 +23,7 @@
 
 
 
-;; typecheck-fundef :: Fundef Env (ListOf Fundef) -> (Type , Env)
+;; typecheck-fundef :: Fundef Env (Listof Fundef) -> Type  Env
 (define (typecheck-fundef f fenv funs)
   
   (def (fundef f-name f-type f-params f-body _) f) ; unpack fundef 
@@ -55,7 +52,7 @@
     (list body-type fenv2)))
 
 
-
+;; typecheck-expr-list :: (Listof Expr) (Listof Type) Env Env (Listof Fundef) -> (Listof Type) Env
 (define (typecheck-expr-list e-list t-list env fenv funs)
   (match e-list
     [(cons e es)
@@ -64,10 +61,7 @@
     [(list) (list (reverse t-list) fenv)]))
 
 
-
-
-
-;; typecheck-expr :: Expr Env Env (ListOf Fundef) -> (Type Env Env)
+;; typecheck-expr :: Expr Env Env (Listof Fundef) -> Type Env
 (define (typecheck-expr e venv fenv funs)
   (match e
 
@@ -216,7 +210,10 @@
        (test-arity)
        (map test-arg-type params t-list)
        (cond
+         ;; if f is in fenv1, its type is returned
+         ;; (with fenv1)
          [(env-contains f fenv1) (list (env-lookup f fenv1) fenv1)]
+         ;; Else, f must be typechecked.
          [else (typecheck-fundef fun fenv1 funs)]))]
     
     [_ (error "not yet implemented")]))
@@ -224,7 +221,7 @@
 
 
 
-;; typecheck-contract :: ArgContract (ListOf Fundef) -> Bool/err
+;; typecheck-contract :: ArgContract (Listof Fundef) -> Bool/err
 (define (typecheck-contract con fenv funs)
 
   (def (argContract _ arg-type predicate) con) ; unpack contract 
@@ -248,13 +245,12 @@
             #t
             (predicate-type-err predicate)))))
 
+;; typecheck-contract-list :: Fundef Env (Listof Fundef) -> (Listof Bool)
 (define (typecheck-contract-list fun fenv funs)
   (def contract-list (fundef-contracts fun))
   (map (λ (con) (typecheck-contract con fenv funs)) contract-list))
          
-
-
-
+;; typecheck :: Program -> Type
 (define (typecheck p)
   (def (prog funs main) p)
   (def fenv (typecheck-fundef-list empty-env funs))  

@@ -23,8 +23,8 @@ representation BNF:
 (def extend-env aEnv)
 
 
+;; env-lookup :: Symbol Env -> Value
 (define (env-lookup x env)
-
   (match env
     [(mtEnv) (error 'env-lookup "free identifier: ~a" x)]
     [(aEnv id val rest)
@@ -32,7 +32,8 @@ representation BNF:
          val
          (env-lookup x rest))]))
 
-
+;; env-contains :: Symbol Env -> Bool
+;; Returns #t if env contains the identifier 'x'.
 (define (env-contains x env)
   (match env
     [(mtEnv) #f]
