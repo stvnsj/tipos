@@ -1,7 +1,6 @@
 #lang play
 (require "env.rkt")
 (require "deftype.rkt")
-;(require "utils.rkt")
 (require "parse.rkt")
 (require "typecheck.rkt")
 (require "interp.rkt")

@@ -4,16 +4,12 @@
 (require "utils.rkt")
 (require "env.rkt")
 
-
-
-
-
 ;; ==============================================
 ;;              TYPECHECK FUNCTIONS
 ;; ==============================================
 
 
-
+;; typecheck-fundef-list :: Env (ListOf Fundef) -> Env
 ;; Builds an environment whose pairs have function name as id and
 ;; function type as value.
 (define (typecheck-fundef-list fenv funs)
@@ -30,16 +26,33 @@
 
 
 
-;; typecheck-fundef :: Fundef Env (ListOf Fundef) -> Type
+;; typecheck-fundef :: Fundef Env (ListOf Fundef) -> (Type , Env)
 (define (typecheck-fundef f fenv funs)
-  (def (fundef f-name f-type f-params f-body _) f)
-  (def env (build-type-env f-params empty-env))
-  (def hhh (if (not (equal? f-type (anyT))) (extend-env f-name f-type fenv) fenv))
-  (def (list body-type fenv0) (typecheck-expr f-body env hhh funs))
-  (def fenv1 (extend-env f-name body-type fenv0))
+  
+  (def (fundef f-name f-type f-params f-body _) f) ; unpack fundef 
+  (def env (build-type-env f-params empty-env))    ; type env of function body
+  
+  ;; f's declared type (it not "any") it's added
+  ;; to the body's type environment. If recursive
+  ;; function type were not declared, program
+  ;; would not terminate.
+  (def fenv0 (if (not (equal? f-type (anyT)))
+                 (extend-env f-name f-type fenv)
+                 fenv))
+
+  ;; The type of the function body is checked. 
+  (def (list body-type fenv1) (typecheck-expr f-body env fenv0 funs))
+
+  ;; If no type was declared, the type of the body
+  ;; is added to fenv1 as the new function env.
+  (def fenv2 (if (equal? f-type (anyT))
+                 (extend-env f-name body-type fenv1)
+                 fenv1))
   (begin
+    ;; Type resulting from the body must match the
+    ;; declared return type.
     (ret-type-test f-name f-type body-type)
-    (list body-type fenv1)))
+    (list body-type fenv2)))
 
 
 
