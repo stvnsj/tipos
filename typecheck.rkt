@@ -7,18 +7,18 @@
 ;; typecheck-fundef-list :: Env (Listof Fundef) -> Env
 ;; Builds an environment whose pairs have function name as id and
 ;; function return type as value.
-(define (typecheck-fundef-list fenv funs)
-  (match funs
+(define (typecheck-fundef-list fenv typechecked-funs funs)
+  (match typechecked-funs
     [(list) fenv]
     [(cons f fs)
      (def f-name (fundef-name f)) ; identifier of f.
      (cond
        ;; If f-name is already in the env, the
        ;; rest of funs is typechecked.
-       [(env-contains f-name fenv) (typecheck-fundef-list fenv fs)]
+       [(env-contains f-name fenv) (typecheck-fundef-list fenv fs funs)]
        [else
         (def (list _ fenv1) (typecheck-fundef f fenv funs))
-        (typecheck-fundef-list fenv1 fs)])]))
+        (typecheck-fundef-list fenv1 fs funs)])]))
 
 
 
@@ -172,7 +172,7 @@
      (def (list t3  fenv3) (typecheck-expr e3 venv fenv2 funs))
      (cond
        [(not (boolT? t1)) (arg-type-error (boolT) t1)]
-       [(not (equal? t2 t3)) (error "Branches must have same type")]
+       [(not (equal? t2 t3)) (error "Static type error: branches must have same type")]
        [else (list t3 fenv3)])]
 
     [(With (typedId id id-type) e1 e2)
@@ -198,7 +198,6 @@
      (def arity    (length params))
      (def args-num (length arguments))
      (def (list t-list fenv1) (typecheck-expr-list arguments '() venv fenv funs))
-
      (def test-arg-type (λ (param arg-type)
                           (def (typedId _ id-type) param)
                           (if (equal? id-type arg-type) #t
@@ -241,7 +240,7 @@
         (predicate-type-err predicate))
     ;; If predicate does not return boolen, then error
     (if (equal? type (boolT)) #t ;; Declared type
-        (if (equal? (typecheck-fundef con-def funs) (boolT))
+        (if (equal? (typecheck-fundef con-def fenv funs) (boolT))
             #t
             (predicate-type-err predicate)))))
 
@@ -253,7 +252,8 @@
 ;; typecheck :: Program -> Type
 (define (typecheck p)
   (def (prog funs main) p)
-  (def fenv (typecheck-fundef-list empty-env funs))  
+
+  (def fenv (typecheck-fundef-list empty-env funs funs))
   (begin 
     (map (λ (fun) (typecheck-contract-list fun fenv funs)) funs)
     ;; typecheck-expr returns a pair (Type, Env),
