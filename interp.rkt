@@ -95,9 +95,9 @@
      (def interp-contract
        (λ (con)
          (def (argContract con-id _ con-pred) con)
-         (def (fundef _ _ _ pred-body _) (lookup-fundef con-pred funs))
-         (def pred-val (interp pred-body fun-env funs) )
-         (def arg-val (interp (Id con-id) fun-env funs))
+         (def pred-app (App con-pred (list (Id con-id))))
+         (def pred-val (interp pred-app fun-env funs))
+         (def arg-val  (interp (Id con-id) fun-env funs))
          (if (equal? pred-val (boolV #t))
              #t
              (contract-err arg-val con-pred))))

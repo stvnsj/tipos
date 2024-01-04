@@ -25,12 +25,14 @@ representation BNF:
 
 ;; env-lookup :: Symbol Env -> Value
 (define (env-lookup x env)
-  (match env
-    [(mtEnv) (error 'env-lookup "free identifier: ~a" x)]
-    [(aEnv id val rest)
-     (if (symbol=? id x)
-         val
-         (env-lookup x rest))]))
+  (begin
+    (match env
+      [(mtEnv) (error 'env-lookup "free identifier: ~a" x)]
+      [(aEnv id val rest)
+       (if (symbol=? id x)
+           val
+           (env-lookup x rest))])))
+
 
 ;; env-contains :: Symbol Env -> Bool
 ;; Returns #t if env contains the identifier 'x'.
