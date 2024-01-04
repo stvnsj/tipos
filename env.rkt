@@ -27,7 +27,7 @@ representation BNF:
 (define (env-lookup x env)
   (begin
     (match env
-      [(mtEnv) (error 'env-lookup "free identifier: ~a" x)]
+      [(mtEnv) (error "Static type error: variable ~a is undefined" x)]
       [(aEnv id val rest)
        (if (symbol=? id x)
            val

@@ -34,7 +34,7 @@
 ;; identifier among the defined functions
 (define (lookup-fundef f funs)
   (match funs
-    [(list ) (error 'lookup-fundef "function not found: ~a" f)]
+    [(list ) (error "Static type error: function ~a is not defined" f)]
     [(cons (and fd (fundef fn _ _ _ _)) rest)    ;; untyped function 
      (if (symbol=? fn f)
          fd
